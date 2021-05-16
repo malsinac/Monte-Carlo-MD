@@ -1,5 +1,5 @@
 # A Monte Carlo simulator for noble gases
-This is a Monte Carlo molecular simulator, suited only for noble gases (in this case, Ar), because all the assumptions will be made arround that all particles don't interact between them (i.e no chemical reaction). The basic procedure will be the following:
+This is a Force-Biased Monte Carlo molecular simulator, suited only for noble gases (in this case, Ar). All the assumptions will be made arround that all particles don't interact between them (i.e no chemical reaction). The basic procedure will be the following:
 1.  Generate a random microstate of the sistem.
 2.  Calculate the potential energy V(r)*.
 3.  Accept the movement if the probability of that microstate is greater than a random number
