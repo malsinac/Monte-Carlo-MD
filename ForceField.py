@@ -4,34 +4,54 @@ Ar-Ar parameters -> https://courses.physics.illinois.edu/phys466/sp2013/projects
 """
 import numpy as np
 
-epsilon = 119.8*1.380649*(10**-23) # Ar-Ar value
-sigma = 3.41 #Ar-Ar value
-charge = 0.5 #Atom charge. Must be changed because it is an aproximation
-varepsilon = 1 * 8.8542*10**-12 #Permeability of medium. If first multiplication term is 1, it means we're in vacuum
+epsilon = 1.65*(10**-10) # Ar-Ar value in J
+sigma = 3.405*(10**-10) #Ar-Ar value in m
+charge = 0.5 #Atom chargein columbs
+varepsilon = 1 / (4 * np.pi * 8.85418781762039)
+
+#Return potential energy in Joules and force in Newtons
 
 def PotentialEnergy(positions):
     global epsilon, sigma, charge, varepsilon
     _Nparticles = len(positions)
-    V = 0
+    V_LJ, V_C = 0, 0
     for i in range(0, _Nparticles-1):
         for j in range(i+1, _Nparticles):
-            r = np.sqrt((positions[str(i)][0]-positions[str(j)][0])**2 + (positions[str(i)][1]-positions[str(j)][1])**2 + (positions[str(i)][2]-positions[str(j)][2])**2)
-            V += (4*epsilon*( (sigma/r)**12 - (sigma/r)**6)) + ((charge**2) / (varepsilon*r))       
-    return V
+            r = np.sqrt((positions[str(i)][0]-positions[str(j)][0])**2 + (positions[str(i)][1]-positions[str(j)][1])**2 + (positions[str(i)][2]-positions[str(j)][2])**2)*(10**-10)
+            try:
+                V_LJ += 4*epsilon*( ((sigma/r)**12) - ((sigma/r)**6))
+                V_C  += (varepsilon*(charge**2)) / r
+            except RuntimeError:
+                return 0.
+            else:      
+                return (V_LJ + V_C, (V_LJ, V_C))
 
 def Force(positions, candidate):
     #Force that actues over a candidate particule
     global epsilon, sigma, charge, varepsilon
     _Nparticles = len(positions)
-    Fx, Fy, Fz = 0, 0, 0
+    Fx_LJ, Fx_C = 0, 0
+    Fy_LJ, Fy_C = 0, 0
+    Fz_LJ, Fz_C = 0, 0
+
     for i in range(0, _Nparticles):
         if i == candidate:
             continue
         else:
-            rx = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2)
-            ry = np.sqrt((positions[str(i)][1]-positions[str(candidate)][1])**2)
-            rz = np.sqrt((positions[str(i)][2]-positions[str(candidate)][2])**2)
-            Fx += (4*epsilon* ((12*((sigma**12)/(rx**13))) - (6*( (sigma**6) / (rx**7))) )) + ((charge**2) / (varepsilon*(rx**2)))
-            Fy += (4*epsilon* ((12*((sigma**12)/(ry**13))) - (6*( (sigma**6) / (ry**7))) )) + ((charge**2) / (varepsilon*(ry**2)))
-            Fz += (4*epsilon* ((12*((sigma**12)/(rz**13))) - (6*( (sigma**6) / (rz**7))) )) + ((charge**2) / (varepsilon*(rz**2)))
-    return (Fx, Fy, Fz)
+            rx = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2)*(10**-10)
+            ry = np.sqrt((positions[str(i)][1]-positions[str(candidate)][1])**2)*(10**-10)
+            rz = np.sqrt((positions[str(i)][2]-positions[str(candidate)][2])**2)*(10**-10)
+            try:
+                #x-axis
+                Fx_LJ += (4*epsilon* ((12*((sigma**12)/(rx**13))) - (6*( (sigma**6) / (rx**7))) ))
+                Fx_C  += ((varepsilon*charge**2) / ((rx**2)))
+                #y-axis
+                Fy_LJ += (4*epsilon* ((12*((sigma**12)/(ry**13))) - (6*( (sigma**6) / (ry**7))) ))
+                Fy_C  += ((varepsilon*charge**2) / ((ry**2)))
+                #z-axis
+                Fz_LJ += (4*epsilon* ((12*((sigma**12)/(rz**13))) - (6*( (sigma**6) / (rz**7))) ))
+                Fz_C  += ((varepsilon*charge**2) / ((rz**2)))
+            except RuntimeError:
+                Fx_LJ, Fx_C, Fy_LJ, Fy_C, Fz_LJ, Fz_C = 0., 0., 0., 0., 0., 0.
+
+    return (Fx_LJ+Fx_C, Fy_LJ+Fy_C, Fz_LJ+Fz_C)
