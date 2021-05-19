@@ -10,17 +10,17 @@ import uuid
 import datetime
 
 #Phisic Variables
-kb = 1.380649*(10**-23) # Boltzman constant
+kb = 0.008314463 # Boltzman constant in kJ/(mol·K)
 A = 0.5 #For the biased-Monte Carlo force desplacement. Need to confirm that parameter 
 
 #User variables
 _Ntimesteps = 500
 _Nparticles = 10
-_Temperature = 300. #In Kelvins
+_Temperature = 200 #In Kelvins
 _RandomInitial = True
 
 #Box dimensions
-_Xmax, _Ymax, _Zmax = 10, 10, 10
+_Xmax, _Ymax, _Zmax = 1000, 1000, 1000
 
 #Starting of simulation
 simulation_name = uuid.uuid4()
@@ -36,7 +36,7 @@ with open(f'MonteCarlo_simulation_{simulation_name}.info', 'w') as output_file:
 if _RandomInitial:
     InitialState = {}
     for i in range(_Nparticles):
-        InitialState[str(i)] = ((2*random.random()-1)*_Xmax/2, (2*random.random()-1)*_Ymax/2, (2*random.random()-1)*_Zmax/2)
+        InitialState[str(i)] = ((2*random.random()-1)*_Xmax, (2*random.random()-1)*_Ymax, (2*random.random()-1)*_Zmax)
 #Output
 with open(f'MonteCarlo_simulation_{simulation_name}.info', 'a+') as output_file:
     output_file.write('\nThe initial position of atoms is the following:')
@@ -57,13 +57,12 @@ for i in range(_Ntimesteps):
     for j in range(_Nparticles):
         if j == NewStateCandidate:
             NewState[str(j)] = (
-            InitialState[str(j)][0] + (((A * Force(ActualState, NewStateCandidate)[0])/(kb * _Temperature))+np.random.normal(0, 2*A)),
-            InitialState[str(j)][1] + (((A * Force(ActualState, NewStateCandidate)[1])/(kb * _Temperature))+np.random.normal(0, 2*A)),
-            InitialState[str(j)][2] + (((A * Force(ActualState, NewStateCandidate)[2])/(kb * _Temperature))+np.random.normal(0, 2*A))
+            InitialState[str(j)][0] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[0])/(kb * _Temperature))+np.random.normal(0, 2*A)),
+            InitialState[str(j)][1] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[1])/(kb * _Temperature))+np.random.normal(0, 2*A)),
+            InitialState[str(j)][2] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[2])/(kb * _Temperature))+np.random.normal(0, 2*A))
             )
         else:
             NewState[str(j)] = ActualState[str(j)]
-        print(Force(ActualState, NewStateCandidate)[0], Force(ActualState, NewStateCandidate)[1], Force(ActualState, NewStateCandidate)[2])
     #Compute the potential energy of that microstate
     V_new = PotentialEnergy(NewState)
     #Transition probability
@@ -89,8 +88,8 @@ for i in range(_Ntimesteps):
             Actual state -> {ActualState_backup[str(NewStateCandidate)]}
             New state ->    {NewState[str(NewStateCandidate)]}
             Probability of transition: {P}
-            Potential energy of actual state -> L-J: {V_actual[1][0]} | Columb: {V_actual[1][1]} | Sum: {V_actual[0]}
-            Potential energy of new state ->    L-J: {V_new[1][0]} | Columb: {V_new[1][1]} | Sum: {V_new[0]}
+            Potential energy of actual state -> L-J: {V_actual[1][0]} kJ/mol | Columb: {V_actual[1][1]} kJ/mol | Sum: {V_actual[0]} kJ/mol
+            Potential energy of new state ->    L-J: {V_new[1][0]} kJ/mol | Columb: {V_new[1][1]} kJ/mol | Sum: {V_new[0]} kJ/mol
             """
         )
     

@@ -4,10 +4,10 @@ Ar-Ar parameters -> https://courses.physics.illinois.edu/phys466/sp2013/projects
 """
 import numpy as np
 
-epsilon = 1.65*(10**-10) # Ar-Ar value in J
-sigma = 3.405*(10**-10) #Ar-Ar value in m
-charge = 0.5 #Atom chargein columbs
-varepsilon = 1 / (4 * np.pi * 8.85418781762039)
+epsilon = 0.997 # Ar-Ar value in kJ/mol
+sigma = 3.405 #Ar-Ar value in A
+charge = -1.358004793 ** -19 #Charge of oxygen in C meanwhile I work out in AR particle charge
+varepsilon = 1 / (4 * np.pi * (1.470795318**-30))
 
 #Return potential energy in Joules and force in Newtons
 
@@ -17,10 +17,10 @@ def PotentialEnergy(positions):
     V_LJ, V_C = 0, 0
     for i in range(0, _Nparticles-1):
         for j in range(i+1, _Nparticles):
-            r = np.sqrt((positions[str(i)][0]-positions[str(j)][0])**2 + (positions[str(i)][1]-positions[str(j)][1])**2 + (positions[str(i)][2]-positions[str(j)][2])**2)*(10**-10)
+            r = np.sqrt((positions[str(i)][0]-positions[str(j)][0])**2 + (positions[str(i)][1]-positions[str(j)][1])**2 + (positions[str(i)][2]-positions[str(j)][2])**2)
             try:
                 V_LJ += 4*epsilon*( ((sigma/r)**12) - ((sigma/r)**6))
-                V_C  += (varepsilon*(charge**2)) / r
+                V_C  += (varepsilon*(charge**2)) / (r)
             except RuntimeError:
                 return 0.
             else:      
@@ -38,9 +38,9 @@ def Force(positions, candidate):
         if i == candidate:
             continue
         else:
-            rx = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2)*(10**-10)
-            ry = np.sqrt((positions[str(i)][1]-positions[str(candidate)][1])**2)*(10**-10)
-            rz = np.sqrt((positions[str(i)][2]-positions[str(candidate)][2])**2)*(10**-10)
+            rx = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2)
+            ry = np.sqrt((positions[str(i)][1]-positions[str(candidate)][1])**2)
+            rz = np.sqrt((positions[str(i)][2]-positions[str(candidate)][2])**2)
             try:
                 #x-axis
                 Fx_LJ += (4*epsilon* ((12*((sigma**12)/(rx**13))) - (6*( (sigma**6) / (rx**7))) ))
