@@ -23,8 +23,9 @@ def PotentialEnergy(positions):
                 V_C  += (varepsilon*(charge**2)) / (r)
             except RuntimeError:
                 return 0.
-            else:      
-                return (V_LJ + V_C, (V_LJ, V_C))
+            else:
+                a = V_LJ + V_C     
+                return (a, (V_LJ, V_C))
 
 def Force(positions, candidate):
     #Force that actues over a candidate particule
@@ -38,19 +39,20 @@ def Force(positions, candidate):
         if i == candidate:
             continue
         else:
+            r = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2 + (positions[str(i)][1]-positions[str(candidate)][1])**2 + (positions[str(i)][2]-positions[str(candidate)][2])**2)
             rx = np.sqrt((positions[str(i)][0]-positions[str(candidate)][0])**2)
             ry = np.sqrt((positions[str(i)][1]-positions[str(candidate)][1])**2)
             rz = np.sqrt((positions[str(i)][2]-positions[str(candidate)][2])**2)
             try:
                 #x-axis
-                Fx_LJ += (4*epsilon* ((12*((sigma**12)/(rx**13))) - (6*( (sigma**6) / (rx**7))) ))
-                Fx_C  += ((varepsilon*charge**2) / ((rx**2)))
+                Fx_LJ += (positions[str(candidate)][0]-positions[str(i)][0]) * ((24*epsilon)/(r**2)) * ( (2*((sigma/r)**12)) - ((sigma/r)**6) )
+                Fx_C  += ((varepsilon*(charge**2)) / ((rx**2)))
                 #y-axis
-                Fy_LJ += (4*epsilon* ((12*((sigma**12)/(ry**13))) - (6*( (sigma**6) / (ry**7))) ))
-                Fy_C  += ((varepsilon*charge**2) / ((ry**2)))
+                Fy_LJ += (positions[str(candidate)][1]-positions[str(i)][1]) * ((24*epsilon)/(r**2)) * ( (2*((sigma/r)**12)) - ((sigma/r)**6) )
+                Fy_C  += ((varepsilon*(charge**2)) / ((ry**2)))
                 #z-axis
-                Fz_LJ += (4*epsilon* ((12*((sigma**12)/(rz**13))) - (6*( (sigma**6) / (rz**7))) ))
-                Fz_C  += ((varepsilon*charge**2) / ((rz**2)))
+                Fz_LJ += (positions[str(candidate)][2]-positions[str(i)][2]) * ((24*epsilon)/(r**2)) * ( (2*((sigma/r)**12)) - ((sigma/r)**6) )
+                Fz_C  += ((varepsilon*(charge**2)) / ((rz**2)))
             except RuntimeError:
                 Fx_LJ, Fx_C, Fy_LJ, Fy_C, Fz_LJ, Fz_C = 0., 0., 0., 0., 0., 0.
 

@@ -5,25 +5,27 @@ tracemalloc.start()
 #### Start of the script ####
 import numpy as np
 import random
-from ForceField import PotentialEnergy, Force
+from ForceField import PotentialEnergy
+from RandomStates import CreateStates
+from Statistics import Statistical_analysys
 import uuid
 import datetime
 
 #Phisic Variables
 kb = 0.008314463 # Boltzman constant in kJ/(mol·K)
-A = 0.5 #For the biased-Monte Carlo force desplacement. Need to confirm that parameter 
 
 #User variables
-_Ntimesteps = 500
+_Ntimesteps = 10000
 _Nparticles = 10
-_Temperature = 200 #In Kelvins
+_Temperature = 3000 #In Kelvins
 _RandomInitial = True
 
 #Box dimensions
-_Xmax, _Ymax, _Zmax = 1000, 1000, 1000
+_Xmax, _Ymax, _Zmax = 50, 50, 50
 
 #Starting of simulation
 simulation_name = uuid.uuid4()
+print(f'Simulation name -> {simulation_name}')
 with open(f'MonteCarlo_simulation_{simulation_name}.info', 'w') as output_file:
     output_file.write(
         f"""
@@ -46,40 +48,39 @@ with open(f'MonteCarlo_simulation_{simulation_name}.info', 'a+') as output_file:
 #Starting the main procedure
 _NStatesAccepted = 0
 _NStatesNotAccepted = 0
+States_Library = [InitialState]
 for i in range(_Ntimesteps):
     if i == 0:
-        ActualState = InitialState
+        ActualState = InitialState   
     #Calculate the potential energy of actual state
     V_actual = PotentialEnergy(ActualState)
     #Generate a random state
-    NewState = {}
-    NewStateCandidate = random.randint(0, _Nparticles-1) # Choose only one atom to change its position
-    for j in range(_Nparticles):
-        if j == NewStateCandidate:
-            NewState[str(j)] = (
-            InitialState[str(j)][0] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[0])/(kb * _Temperature))+np.random.normal(0, 2*A)),
-            InitialState[str(j)][1] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[1])/(kb * _Temperature))+np.random.normal(0, 2*A)),
-            InitialState[str(j)][2] + ((2*random.random() - 1)*300),#(((A * Force(ActualState, NewStateCandidate)[2])/(kb * _Temperature))+np.random.normal(0, 2*A))
-            )
-        else:
-            NewState[str(j)] = ActualState[str(j)]
+    config_file = {
+        'method': 3,
+        'A': 0.05,
+        'max_displacement': 10
+    }
+    NewOne = CreateStates(ActualState, config_file, kb=kb, Temp=_Temperature, box_size=(_Xmax, _Ymax, _Zmax), N_acepted=(_NStatesAccepted/(_NStatesAccepted+_NStatesNotAccepted+np.spacing(0))))
+    NewState = NewOne[0]
+    NewStateCandidate = NewOne[1]
     #Compute the potential energy of that microstate
     V_new = PotentialEnergy(NewState)
     #Transition probability
     P = min(
         1,
-        np.exp(- (V_new[0] - V_actual[0]) / (kb * _Temperature))
+        np.exp(- ((V_new[0] - V_actual[0]) / (kb * _Temperature)))
     )
     #Transition procedure
     ActualState_backup = ActualState
-    if random.random() <= P:
+    if random.random() < P:
         transition = 'True'
         ActualState = NewState
         _NStatesAccepted += 1
     else:
         transition = 'False'
         _NStatesNotAccepted += 1
-
+    
+    States_Library.append(ActualState)
     #Output formating
     with open(f'MonteCarlo_simulation_{simulation_name}.info', 'a+') as output_file:
         output_file.write(
@@ -92,7 +93,11 @@ for i in range(_Ntimesteps):
             Potential energy of new state ->    L-J: {V_new[1][0]} kJ/mol | Columb: {V_new[1][1]} kJ/mol | Sum: {V_new[0]} kJ/mol
             """
         )
-    
+
+#Analysis of simulation
+simu_stats = Statistical_analysys(States_Library, simulation_name)
+simu_stats.RMSD()
+
 #### End of the script ####
 maxx, _ = tracemalloc.get_traced_memory()
 tracemalloc.stop()
